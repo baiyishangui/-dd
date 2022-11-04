@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html l>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>京东轮播图</title>
+    <link rel="stylesheet" href="../css/reset.css">
+    
+
+    <style>
+        .img-list {
+            width: 1920px;
+            height: 1080px;
+            margin: 200px auto;
+            position: relative;
+
+
+        }
+
+        .img-list li {
+            position: absolute;
+
+        }
+
+        /*通过设置zindex的值改变元素的显示顺序
+        .img-list :nth-child(2) {
+            z-index: 3;
+        }*/
+
+        .pointer {
+            position: absolute;
+            z-index: 30;
+            bottom: 20px;
+
+        }
+
+        .pointer a {
+            display: block;
+            float: left;
+            margin-left: 5px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, .3);
+            background-clip: content-box;
+            border: 2px solid transparent;
+        }
+
+        .pointer a.active,
+        .pointer a:hover {
+            background-color: #fff;
+            border: 2px solid rgba(255, 255, 255, .3);
+        }
+    </style>
+</head>
+
+<body>
+    <ul class="img-list">
+        <li><a href="#"><img src="../pictures/1.jpg" alt=""></a></li>
+        <li><a href="#"><img src="../pictures/2.jpg" alt=""></a></li>
+        <li><a href="#"><img src="../pictures/3.jpg" alt=""></a></li>
+        <li><a href="#"><img src="../pictures/4.jpg" alt=""></a></li>
+        <div class="pointer">
+            <a href="" class="active"></a>
+            <a href="#"></a>
+            <a href="#"></a>
+            <a href="#"></a>
+        </div>
+
+
+
+    </ul>
+
+
+
+</body>
+
+</html>

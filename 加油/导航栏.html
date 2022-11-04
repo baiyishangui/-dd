@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导航栏</title>
+    <link rel="stylesheet" href="./css/reset.css">
+    <style>
+        body{background-color: burlywood;}
+        .total-nav{
+            width: 200px;
+            height: 200px ;
+            margin:  50px   auto;
+            padding: 10px;
+            background-color:antiquewhite ;
+
+
+        }   
+        .total-nav .item{
+            height: 25px;
+            /*让字体在里面那个div中垂直居中*/
+            line-height: 25px;
+            padding-left: 18px;
+        }
+        /*为鼠标设置一个移入显示背景色*/
+         :hover.item {background-color: blueviolet;}
+         .item a{color:#333;
+                 text-decoration: none;
+    }
+    </style>
+</head> 
+
+<body>
+    <!--首先思考所需要的结构（先考虑外部容器的实现方式） nav(div) div(div)ul
+    (li)，然后你要记住，html5做好结构框架，然后css用来设置具体样式-->
+    <nav class="total-nav">
+        <div class="item">
+            <a href="10.3.html">手机</a>/
+            <a href="javascript">运营商</a>/
+            <a href="#">数码</a>
+
+        </div>
+        <div class="item">  
+            <a href="#">电脑</a>/
+            <a href="#">办公</a>/
+            
+
+        </div>
+        <div class="item">
+            <a href="#">家具</a>/
+            <a href="#">家居</a>/
+            <a href="#">服装</a>
+
+        </div>
+        <div class="item">
+            <a href="#">男装</a>/
+            <a href="#">女装</a>/
+            <a href="#">内衣</a>
+
+        </div>
+        <div class="item">
+            <a href="#">美妆</a>/
+            <a href="#">宠物</a>/
+            <a href="#">个护清洁</a>
+
+        </div>
+        <div class="item">
+            <a href="#">玩具</a>/
+            <a href="#">乐器</a>/
+            <a href="#">母婴</a>
+
+        </div>
+        <div class="item">
+            <a href="#">男鞋</a>/
+            <a href="#">女鞋</a>/
+            <a href="#">运动</a>
+
+        </div>
+        <div class="item">
+            <a href="#">食品</a>/
+            <a href="#">酒类</a>/
+            <a href="#">生鲜</a>
+ </nav>
+
+
+</body>
+
+</html>

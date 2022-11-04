@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.6</title>
+    <link rel="stylesheet" href="../css/reset.css">
+    <style>
+        /*
+        *{margin: 0;padding: 0;}
+        .box1 {
+            width: 200px;
+            height: 200px;
+            background-color: black;
+            float: left;
+        }
+
+        .box2 {
+           
+            background-color: red;
+            float: left;
+        }*/
+        a {
+            /*要实现点击超链接的背景部分也可以有效果的情况下，要改变a的大小，但是
+            没有办法直接给a设定高度，因为a是行内元素没办法直接改。要先改变ade性质*/
+            display: inline-block;
+            text-decoration: none;
+            color: black;
+            font-size: 20px;
+            text-transform: capitalize;
+            /*设置7个超链接的宽度*/
+            padding: 0 30px;
+        }
+
+        a:hover {
+            background-color: #3f3f3f;
+            color: #e8e7e3;
+        }
+
+        .nav {
+            width: 1210px;
+            height: 50px;
+            background-color: #e8e7e3;
+            margin: 100px;
+        }
+
+        /*设置nav里的li标签*/
+        .nav li {
+            float: left;
+            height: 50px;
+            line-height: 50px;
+        }
+        /*一种较为简单的方式处理最后的空档，即直接给li的最后一个孩子元素的a
+        设置padding*/
+        .nav li:last-child a {
+            padding: 0 62px 0 57px;
+        }
+    </style>
+</head>
+
+<body>
+    <!--<div class="box1">
+
+    </div>
+    <div class="box2">
+     温兆莹要请我喝楼下的羊肉汤hh
+
+    </div>-->
+    <ul class="nav">
+        <li><a href="#">html/css</a></li>
+        <li><a href="#">browser side</a></li>
+        <li><a href="#">server side</a></li>
+        <li><a href="#">programming</a></li>
+        <li><a href="#">xml</a></li>
+        <li><a href="#">web buliding</a></li>
+        <li><a href="#">reference</a></li>
+    </ul>
+
+
+
+</body>
+
+</html>

@@ -1,0 +1,47 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+@total-width: 750;
+
+.w {
+    width: (693/40rem);
+    margin: 0 auto;
+}
+// 设置根元素
+html{
+    // 设置rem的比值
+    font-size: (100vw/@total-width)*40;
+    background-color: #eff0f4;
+
+}
+
+a{
+    text-decoration: none;
+    color: #24253d;
+    font-size: (50/40rem);
+    i{
+        color: #999;
+        font-size: 25px!important;
+        
+       
+    }
+
+}
+
+
+// 设置头部header
+.top-bar:extend(.w){
+    display: flex;
+    height: (175/40rem) ;
+    // 设置对齐方式
+    justify-content: space-between;
+    align-items: center;
+
+}
+
+.banner:extend(.w){
+   
+    img{width: 100%;}
+}

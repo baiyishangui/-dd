@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+   <meta charset="UTF-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>背景</title>
+   <style>
+      .box1 {
+         width: 500px;
+         height: 500px;
+         background-color: #bfa;
+         background-image: url("../pictures/5.jpg");
+         background-repeat: no-repeat;
+         border: 10px red double;
+         padding: 10px;
+         
+         /*background-clip函数用于确定背景的绘制范围，border-box	背景被裁剪到边框盒
+         padding-box	背景被裁剪到内边距框。content-box	背景被裁剪到内容框。*/
+         background-clip: content-box;
+         background-origin: padding-box;
+         background-size: 400px 400px;
+      }
+   </style>
+</head>
+
+<body>
+
+
+   <div class="box1"></div>
+
+
+
+</body>
+
+</html>

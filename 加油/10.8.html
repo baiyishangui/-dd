@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .box1 {
+            border: 10px red solid;
+        }
+
+        .box2 {
+            width: 100px;
+            height: 100px;
+            background-color: #bfa;
+            float: left;
+        }
+
+        /*利用空白块清除.box2的高度塌陷
+        .box3{clear: both;}*/
+        /*利用after伪类，来解决问题，但是要记住display block转换成块元素*/ 
+        .box1::after {
+            content: "";
+            display: block;
+            clear: both;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box1">
+        <div class="box2"></div>
+        <div class="box3"></div>
+
+
+
+    </div>
+
+
+
+
+
+
+</body>
+
+</html>

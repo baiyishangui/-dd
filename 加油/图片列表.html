@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html >
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片列表b</title>
+    <link rel="stylesheet" href="./css/reset.css">
+    <style>
+        body{background-color:antiquewhite;}
+    .img-list{
+        width: 480px;
+        height 480px;
+        overflow: hidden;
+        margin:  50px  auto;
+        background-color: 244.244.244;
+    } 
+     .img-list  img{
+        width: 100%;
+         /*注意这里调整的是li中的图片大小，百分比会根据父元素来设置，所以100%就是
+         会和ul保持一样的大小，达成我们的效果*/ 
+     }
+     .img-list li{
+        margin-bottom:  9px;
+     }
+</style>
+   </head>
+<body>
+   <!-- <div>
+        <a href=""><img src="" alt=""></a>
+        <a href=""><img src="" alt=""></a>
+        <a href=""><img src="" alt=""></a> 
+       
+    </div>实现的第一种方法 
+    --> 
+<ul class="img-list">
+    <li>
+           <a href="">
+              <img src="../pictures/1.jpg" alt="">
+
+
+           </a>
+        </li>
+    <li>
+            <a href="">
+               <img src="../pictures/2.jpg" alt="">
+ 
+ 
+            </a>
+        </li>
+     <li>
+            <a href="">
+               <img src="../pictures/3.jpg" alt="">
+             
+ 
+            </a>
+         </li>
+</ul>
+</body>
+</html> 

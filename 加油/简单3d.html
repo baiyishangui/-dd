@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单3d</title>
+    <link rel="stylesheet" href="../css/reset.css">
+    <style>
+        /* 3d效果是需要元素开启视距才可以实现的 */
+
+        html {
+            perspective: 800px
+        }
+
+        .cube>div {
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            /* 设置元素的不透明度 */
+            opacity: 0.7;
+
+
+        }
+
+
+        .cube {
+            width: 200px;
+            height: 200px;
+
+            margin: 100px auto;
+
+
+
+            transform-style: preserve-3d;
+            /* transform: rotateX(45deg) rotateZ(45deg); */
+         animation: run 20s infinite;
+
+        }
+
+
+
+        img {
+            vertical-align: top;
+        }
+
+        .box1 {
+            transform: rotateY(90deg) translateZ(100px);
+        }
+
+        .box2 {
+            transform: rotateY(-90deg) translateZ(100px);
+        }
+
+        .box3 {
+            transform: rotateX(90deg) translateZ(100px);
+        }
+
+        .box4 {
+            transform: rotateX(-90deg) translateZ(100px);
+        }
+
+        .box5 {
+            transform: rotateY(180deg) translateZ(100px);
+        }
+
+        .box6 {
+            transform: rotateY(0deg) translateZ(100px);
+        }
+
+        @keyframes run {
+            from {
+                transform:rotateX(0) rotateZ(0)
+            }
+           to{
+                transform:rotateX(1turn) rotateZ(1turn)
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cube">
+        <!-- 引入图片 -->
+        <div class="box1">
+            <img src="../pictures/7.jpg" alt="">
+        </div>
+        <div class="box2">
+            <img src="../pictures/8.jpg" alt="">
+        </div>
+        <div class="box3">
+            <img src="../pictures/9.jpg" alt="">
+        </div>
+        <div class="box4">
+            <img src="../pictures/10.jpg" alt="">
+        </div>
+        <div class="box5">
+            <img src="../pictures/11.jpg" alt="">
+        </div>
+        <div class="box6">
+            <img src="../pictures/12.jpg" alt="">
+        </div>
+    </div>
+</body>
+
+</html>

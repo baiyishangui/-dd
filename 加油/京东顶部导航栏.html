@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="//at.alicdn.com/t/c/font_3696798_8m8mf9axwwb.css">
+    <style>
+        body {
+            font-size: 12px/1.5 Microsoft YaHei, Heiti SC, tahoma, arial, Hiragino Sans GB, "\5B8B\4F53", sans-serif;
+            ;
+        }
+
+
+        .outsiderbottle {
+            width: 100%;
+            background-color: #e3e4e5;
+            height: 30px;
+            line-height: 30px;
+            border-bottom: 1px #ddd solid
+        }
+
+        .outsiderbottle a,
+        .outsiderbottle span,
+        .outsiderbottle i {
+            color: #999;
+            text-decoration: none;
+        }
+
+        .outsiderbottle a:hover {
+            color: #f10125;
+        }
+
+        .insidebottle {
+            width: 1190px;
+            /*设置水平居中*/
+            margin: 0 auto;
+        }
+
+        .curcity {
+            float: left;
+            padding: 0px 10px;
+            position: relative;
+            z-index: 2;
+            height: 30px;
+
+        }
+
+         .leftmenu:hover .curcity {
+            background-color: white;
+
+            border: 1px solid rgb(204, 204, 204);
+            border-bottom:none;
+        }
+
+        
+
+        .curcity i {
+            color: #f10125;
+        }
+
+        .rightmenu {
+            float: right;
+            
+        }
+
+        .rightmenu li {
+            float: left;
+            margin: 0 10px;
+            height: 30px;
+
+
+        }
+
+        .iconfont {
+            font-size: 10px;
+        }
+
+        .leftmenu .city-list {
+            display: none;
+            width: 326px;
+            height: 435px;
+            background-color: white;
+            border: 1px solid rgb(204, 204, 204);
+            /*设置绝对定位让城市菜单脱离文档流，就不会影响到父元素*/
+            position: absolute;
+            margin-top: 30px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.3);
+            z-index: 1;
+        }
+
+        /*思考一下这个语句的作用，初步完成效果其实，即让curcity的下一个兄弟元素显示出来
+        .curcity:hover+ .city-list{display: block;}*/
+        .leftmenu:hover>.city-list {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="outsiderbottle">
+        <div class="insidebottle">
+            <!--左侧的菜单-->
+            <div class="leftmenu">
+                <div class="curcity">
+                    <i class="iconfont icon-dingwei"></i>
+                    <a href="#">合肥</a>
+                </div>
+                <!--放置一个城市下拉列表-->
+                <div class="city-list">
+                </div>
+            </div>
+            <!--右侧的菜单-->
+            <ul class="rightmenu">
+                <li>
+                    <a href="#">你好请登录</a>
+                    <a href="#">免费注册</a>
+                </li>
+                <li>
+                    <a href="#">我的订单</a>
+
+                </li>
+                <li>
+                    <a href="#">我的京东</a>
+                </li>
+                <li><a href="#">京东会员</a><i class="iconfont icon-jiantouxia"></i>
+                    </i>
+                </li>
+
+                <li><a href="#">企业采购</a>
+                </li>
+                <li>
+                    <span>客户服务</span>
+
+                    <i class="iconfont icon-jiantouxia"></i>
+
+                </li>
+                <li><span>网站导航</span>
+                    <i class="iconfont icon-jiantouxia"></i>
+                </li>
+
+
+
+
+            </ul>
+
+
+
+
+
+
+
+        </div>
+    </div>
+
+</body>
+
+</html>
