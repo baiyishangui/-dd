@@ -1,0 +1,159 @@
+其他内建对象，像 Array、Date、Function 及其他，都在 prototype 上挂载了方法。
+
+例如，当我们创建一个数组 [1, 2, 3]，在内部会默认使用 new Array() 构造器。因此 Array.prototype 变成了这个数组的 prototype，并为这个数组提供数组的操作方法。这样内存的存储效率是很高的。
+
+按照规范，所有的内建原型顶端都是 Object.prototype。这就是为什么有人说“一切都从对象继承而来”。
+
+下面是完整的示意图（3 个内建对象）：
+
+
+
+
+
+
+
+让我们手动验证原型：
+
+let arr = [1, 2, 3];
+
+// 它继承自 Array.prototype？
+alert( arr.__proto__ === Array.prototype ); // true
+
+// 接下来继承自 Object.prototype？
+alert( arr.__proto__.__proto__ === Object.prototype ); // true
+
+// 原型链的顶端为 null。
+alert( arr.__proto__.__proto__.__proto__ ); // null
+=========================================
+在现代编程中，只有一种情况下允许修改原生原型。那就是 polyfilling。
+
+Polyfilling 是一个术语，表示某个方法在 JavaScript 规范中已存在，但是特定的 JavaScript 引擎尚不支持该方法，那么我们可以通过手动实现它，并用以填充内建原型。
+
+例如：
+
+if (!String.prototype.repeat) { // 如果这儿没有这个方法
+  // 那就在 prototype 中添加它
+
+  String.prototype.repeat = function(n) {
+    // 重复传入的字符串 n 次
+
+    // 实际上，实现代码比这个要复杂一些（完整的方法可以在规范中找到）
+    // 但即使是不够完美的 polyfill 也常常被认为是足够好的
+    return new Array(n + 1).join(this);
+  };
+}
+
+
+alert( "La".repeat(3) ); // LaLaLa
+==========
+所有的内建对象都遵循相同的模式（pattern）：
+方法都存储在 prototype 中（Array.prototype、Object.prototype、Date.prototype 等）。
+对象本身只存储数据（数组元素、对象属性、日期）。
+============
+给函数添加一个方法
+Function.prototype.defer = function(ms) {
+  setTimeout(this, ms);
+};
+
+function f() {
+  alert("Hello!");
+}
+
+f.defer(1000); // 1 秒后显示 "Hello!"
+==========================
+将装饰器 "defer()" 添加到函数
+重要程度: 4
+在所有函数的原型中添加 defer(ms) 方法，该方法返回一个包装器，将函数调用延迟 ms 毫秒。
+
+下面是它应该如何执行的例子：
+
+function f(a, b) {
+  alert( a + b );
+}
+
+f.defer(1000)(1, 2); // 1 秒后显示 3
+请注意，参数应该被传给原始函数。
+
+解决方案
+Function.prototype.defer = function(ms) {
+  let f = this;
+  return function(...args) {
+    setTimeout(() => f.apply(this, args), ms);
+  }
+};
+
+// check it
+function f(a, b) {
+  alert( a + b );
+}
+
+f.defer(1000)(1, 2); // 1 秒后显示 3
+请注意：我们在 f.apply 中使用 this 以使装饰器适用于对象方法。
+
+因此，如果将包装器函数作为对象方法调用，那么 this 将会被传递给原始方法 f。
+
+Function.prototype.defer = function(ms) {
+  let f = this;
+  return function(...args) {
+    setTimeout(() => f.apply(this, args), ms);
+  }
+};
+
+let user = {
+  name: "John",
+  sayHi() {
+    alert(this.name);
+  }
+}
+
+user.sayHi = user.sayHi.defer(1000);
+
+user.sayHi();
+==========================================
+为 dictionary 添加 toString 方法
+重要程度: 5
+这儿有一个通过 Object.create(null) 创建的，用来存储任意 key/value 对的对象 dictionary。
+
+为该对象添加 dictionary.toString() 方法，该方法应该返回以逗号分隔的所有键的列表。你的 toString 方法不应该在使用 for...in 循环遍历数组的时候显现出来。
+
+它的工作方式如下：
+
+let dictionary = Object.create(null);
+
+// 你的添加 dictionary.toString 方法的代码
+
+// 添加一些数据
+dictionary.apple = "Apple";
+dictionary.__proto__ = "test"; // 这里 __proto__ 是一个常规的属性键
+
+// 在循环中只有 apple 和 __proto__
+for(let key in dictionary) {
+  alert(key); // "apple", then "__proto__"
+}
+
+// 你的 toString 方法在发挥作用
+alert(dictionary); // "apple,__proto__"
+解决方案
+可以使用 Object.keys 获取所有可枚举的键，并输出其列表。
+
+为了使 toString 不可枚举，我们使用一个属性描述器来定义它。Object.create 语法允许我们为一个对象提供属性描述器作为第二参数。
+
+let dictionary = Object.create(null, {
+  toString: { // 定义 toString 属性
+    value() { // value 是一个 function
+      return Object.keys(this).join();
+    }
+  }
+});
+
+dictionary.apple = "Apple";
+dictionary.__proto__ = "test";
+
+// apple 和 __proto__ 在循环中
+for(let key in dictionary) {
+  alert(key); // "apple"，然后是 "__proto__"
+}
+
+// 通过 toString 处理获得的以逗号分隔的属性列表
+alert(dictionary); // "apple,__proto__"
+当我们使用描述器创建一个属性，它的标识默认是 false。因此在上面这段代码中，dictonary.toString 是不可枚举的。
