@@ -1,0 +1,446 @@
+正如 函数绑定 一章中所讲的，JavaScript 中的函数具有动态的 this。它取决于调用上下文。
+
+因此，如果一个对象方法被传递到某处，或者在另一个上下文中被调用，则 this 将不再是对其对象的引用。
+
+例如，此代码将显示 undefined：
+
+class Button {
+  constructor(value) {
+    this.value = value;
+  }
+
+  click() {
+    alert(this.value);
+  }
+}
+
+let button = new Button("hello");
+
+setTimeout(button.click, 1000); // undefined
+这个问题被称为“丢失 this”。
+
+我们在 函数绑定 一章中讲过，有两种可以修复它的方式：
+
+传递一个包装函数，例如 setTimeout(() => button.click(), 1000)。
+将方法绑定到对象，例如在 constructor 中。
+类字段提供了另一种非常优雅的语法：
+
+class Button {
+  constructor(value) {
+    this.value = value;
+  }
+  click = () => {
+    alert(this.value);
+  }
+}
+
+let button = new Button("hello");
+
+setTimeout(button.click, 1000); // hello
+类字段 click = () => {...} 是基于每一个对象被创建的，在这里对于每一个 Button 对象都有一个独立的方法，在内部都有一个指向此对象的 this。我们可以把 button.click 传递到任何地方，而且 this 的值总是正确的。
+
+在浏览器环境中，它对于进行事件监听尤为有用。
+===============================
+基本的类语法看起来像这样：
+
+class MyClass {
+  prop = value; // 属性
+
+  constructor(...) { // 构造器
+    // ...
+  }
+
+  method(...) {} // method
+
+  get something(...) {} // getter 方法
+  set something(...) {} // setter 方法
+
+  [Symbol.iterator]() {} // 有计算名称（computed name）的方法（此处为 symbol）
+  // ...
+}
+技术上来说，MyClass 是一个函数（我们提供作为 constructor 的那个），而 methods、getters 和 setters 都被写入了 MyClass.prototype。
+=======================================
+在 extends 后允许任意表达式
+类语法不仅允许指定一个类，在 extends 后可以指定任意表达式。
+
+例如，一个生成父类的函数调用：
+
+function f(phrase) {
+  return class {
+    sayHi() { alert(phrase); }
+  };
+}
+
+class User extends f("Hello") {}
+
+new User().sayHi(); // Hello
+这里 class User 继承自 f("Hello") 的结果。
+
+这对于高级编程模式，例如当我们根据许多条件使用函数生成类，并继承它们时来说可能很有用。
+=============================================
+箭头函数没有 super
+正如我们在 深入理解箭头函数 一章中所提到的，箭头函数没有 super。
+
+如果被访问，它会从外部函数获取。例如：
+
+class Rabbit extends Animal {
+  stop() {
+    setTimeout(() => super.stop(), 1000); // 1 秒后调用父类的 stop
+  }
+}
+箭头函数中的 super 与 stop() 中的是一样的，所以它能按预期工作。如果我们在这里指定一个“普通”函数，那么将会抛出错误：
+
+// 意料之外的 super
+setTimeout(function() { super.stop() }, 1000);
+===========================================
+重写 constructor
+对于重写 constructor 来说，则有点棘手。
+
+到目前为止，Rabbit 还没有自己的 constructor。
+
+根据 规范，如果一个类扩展了另一个类并且没有 constructor，那么将生成下面这样的“空” constructor：
+
+class Rabbit extends Animal {
+  // 为没有自己的 constructor 的扩展类生成的
+  constructor(...args) {
+    super(...args);
+  }
+}
+正如我们所看到的，它调用了父类的 constructor，并传递了所有的参数。如果我们没有写自己的 constructor，就会出现这种情况。
+
+现在，我们给 Rabbit 添加一个自定义的 constructor。除了 name 之外，它还会指定 earLength。
+
+class Animal {
+  constructor(name) {
+    this.speed = 0;
+    this.name = name;
+  }
+  // ...
+}
+
+class Rabbit extends Animal {
+
+  constructor(name, earLength) {
+    this.speed = 0;
+    this.name = name;
+    this.earLength = earLength;
+  }
+
+  // ...
+}
+
+// 不工作！
+let rabbit = new Rabbit("White Rabbit", 10); // Error: this is not defined.
+哎呦！我们得到了一个报错。现在我们没法新建 rabbit。是什么地方出错了？
+
+简短的解释是：
+
+继承类的 constructor 必须调用 super(...)，并且 (!) 一定要在使用 this 之前调用。
+
+……但这是为什么呢？这里发生了什么？确实，这个要求看起来很奇怪。
+
+当然，本文会给出一个解释。让我们深入细节，这样你就可以真正地理解发生了什么。
+
+在 JavaScript 中，继承类（所谓的“派生构造器”，英文为 “derived constructor”）的构造函数与其他函数之间是有区别的。派生构造器具有特殊的内部属性 [[ConstructorKind]]:"derived"。这是一个特殊的内部标签。
+
+该标签会影响它的 new 行为：
+
+当通过 new 执行一个常规函数时，它将创建一个空对象，并将这个空对象赋值给 this。
+但是当继承的 constructor 执行时，它不会执行此操作。它期望父类的 constructor 来完成这项工作。
+因此，派生的 constructor 必须调用 super 才能执行其父类（base）的 constructor，否则 this 指向的那个对象将不会被创建。并且我们会收到一个报错。
+
+为了让 Rabbit 的 constructor 可以工作，它需要在使用 this 之前调用 super()，就像下面这样：
+
+class Animal {
+
+  constructor(name) {
+    this.speed = 0;
+    this.name = name;
+  }
+
+  // ...
+}
+
+class Rabbit extends Animal {
+
+  constructor(name, earLength) {
+    super(name);
+    this.earLength = earLength;
+  }
+
+  // ...
+}
+
+// 现在可以了
+let rabbit = new Rabbit("White Rabbit", 10);
+alert(rabbit.name); // White Rabbit
+alert(rabbit.earLength); // 10
+===================================
+我们不仅可以重写方法，还可以重写类字段。
+
+不过，当我们在父类构造器中访问一个被重写的字段时，有一个诡异的行为，这与绝大多数其他编程语言都很不一样。
+
+请思考此示例：
+
+class Animal {
+  name = 'animal';
+
+  constructor() {
+    alert(this.name); // (*)
+  }
+}
+
+class Rabbit extends Animal {
+  name = 'rabbit';
+}
+
+new Animal(); // animal
+new Rabbit(); // animal
+这里，Rabbit 继承自 Animal，并且用它自己的值重写了 name 字段。
+
+因为 Rabbit 中没有自己的构造器，所以 Animal 的构造器被调用了。
+
+有趣的是在这两种情况下：new Animal() 和 new Rabbit()，在 (*) 行的 alert 都打印了 animal。
+
+换句话说，父类构造器总是会使用它自己字段的值，而不是被重写的那一个。
+
+古怪的是什么呢？
+
+如果这还不清楚，那么让我们用方法来进行比较。
+
+这里是相同的代码，但是我们调用 this.showName() 方法而不是 this.name 字段：
+
+class Animal {
+  showName() {  // 而不是 this.name = 'animal'
+    alert('animal');
+  }
+
+  constructor() {
+    this.showName(); // 而不是 alert(this.name);
+  }
+}
+
+class Rabbit extends Animal {
+  showName() {
+    alert('rabbit');
+  }
+}
+
+new Animal(); // animal
+new Rabbit(); // rabbit
+请注意：这时的输出是不同的。
+
+这才是我们本来所期待的结果。当父类构造器在派生的类中被调用时，它会使用被重写的方法。
+
+……但对于类字段并非如此。正如前文所述，父类构造器总是使用父类的字段。
+
+这里为什么会有这样的区别呢？
+
+实际上，原因在于字段初始化的顺序。类字段是这样初始化的：
+
+对于基类（还未继承任何东西的那种），在构造函数调用前初始化。
+对于派生类，在 super() 后立刻初始化。
+在我们的例子中，Rabbit 是派生类，里面没有 constructor()。正如先前所说，这相当于一个里面只有 super(...args) 的空构造器。
+
+所以，new Rabbit() 调用了 super()，因此它执行了父类构造器，并且（根据派生类规则）只有在此之后，它的类字段才被初始化。在父类构造器被执行的时候，Rabbit 还没有自己的类字段，这就是为什么 Animal 类字段被使用了。
+
+这种字段与方法之间微妙的区别只特定于 JavaScript。
+
+幸运的是，这种行为仅在一个被重写的字段被父类构造器使用时才会显现出来。接下来它会发生的东西可能就比较难理解了，所以我们要在这里对此行为进行解释。
+
+如果出问题了，我们可以通过使用方法或者 getter/setter 替代类字段，来修复这个问题。
+========================================================
+创建实例时出错
+重要程度: 5
+这里有一份 Rabbit 扩展 Animal 的代码。
+
+不幸的是，Rabbit 对象无法被创建。是哪里出错了呢？请解决它。
+
+class Animal {
+
+  constructor(name) {
+    this.name = name;
+  }
+
+}
+
+class Rabbit extends Animal {
+  constructor(name) {
+    this.name = name;
+    this.created = Date.now();
+  }
+}
+
+let rabbit = new Rabbit("White Rabbit"); // Error: this is not defined
+alert(rabbit.name);
+解决方案
+这是因为子类的 constructor 必须调用 super()。
+
+这里是修正后的代码：
+
+class Animal {
+
+  constructor(name) {
+    this.name = name;
+  }
+
+}
+
+class Rabbit extends Animal {
+  constructor(name) {
+    super(name);
+    this.created = Date.now();
+  }
+}
+
+let rabbit = new Rabbit("White Rabbit"); // 现在好了
+alert(rabbit.name); // White Rabbit
+=================================================
+让我们演示一下这个问题。简单起见，我们使用普通对象而不使用类。
+
+如果你不想知道更多的细节知识，你可以跳过此部分，并转到下面的 [[HomeObject]] 小节。这没关系的。但如果你感兴趣，想学习更深入的知识，那就继续阅读吧。
+
+在下面的例子中，rabbit.__proto__ = animal。现在让我们尝试一下：在 rabbit.eat() 我们将会使用 this.__proto__ 调用 animal.eat()：
+
+let animal = {
+  name: "Animal",
+  eat() {
+    alert(`${this.name} eats.`);
+  }
+};
+
+let rabbit = {
+  __proto__: animal,
+  name: "Rabbit",
+  eat() {
+    // 这就是 super.eat() 可以大概工作的方式
+    this.__proto__.eat.call(this); // (*)
+  }
+};
+
+rabbit.eat(); // Rabbit eats.
+在 (*) 这一行，我们从原型（animal）中获取 eat，并在当前对象的上下文中调用它。请注意，.call(this) 在这里非常重要，因为简单的调用 this.__proto__.eat() 将在原型的上下文中执行 eat，而非当前对象。
+
+在上面的代码中，它确实按照了期望运行：我们获得了正确的 alert。
+
+现在，让我们在原型链上再添加一个对象。我们将看到这件事是如何被打破的：
+
+let animal = {
+  name: "Animal",
+  eat() {
+    alert(`${this.name} eats.`);
+  }
+};
+
+let rabbit = {
+  __proto__: animal,
+  eat() {
+    // ...bounce around rabbit-style and call parent (animal) method
+    this.__proto__.eat.call(this); // (*)
+  }
+};
+
+let longEar = {
+  __proto__: rabbit,
+  eat() {
+    // ...do something with long ears and call parent (rabbit) method
+    this.__proto__.eat.call(this); // (**)
+  }
+};
+
+longEar.eat(); // Error: Maximum call stack size exceeded
+代码无法再运行了！我们可以看到，在试图调用 longEar.eat() 时抛出了错误。
+
+原因可能不那么明显，但是如果我们跟踪 longEar.eat() 调用，就可以发现原因。在 (*) 和 (**) 这两行中，this 的值都是当前对象（longEar）。这是至关重要的一点：所有的对象方法都将当前对象作为 this，而非原型或其他什么东西。
+
+因此，在 (*) 和 (**) 这两行中，this.__proto__ 的值是完全相同的：都是 rabbit。它们俩都调用的是 rabbit.eat，它们在不停地循环调用自己，而不是在原型链上向上寻找方法。
+
+这张图介绍了发生的情况：
+
+
+在 longEar.eat() 中，(**) 这一行调用 rabbit.eat 并为其提供 this=longEar。
+
+// 在 longEar.eat() 中我们有 this = longEar
+this.__proto__.eat.call(this) // (**)
+// 变成了
+longEar.__proto__.eat.call(this)
+// 也就是
+rabbit.eat.call(this);
+之后在 rabbit.eat 的 (*) 行中，我们希望将函数调用在原型链上向更高层传递，但是 this=longEar，所以 this.__proto__.eat 又是 rabbit.eat！
+
+// 在 rabbit.eat() 中我们依然有 this = longEar
+this.__proto__.eat.call(this) // (*)
+// 变成了
+longEar.__proto__.eat.call(this)
+// 或（再一次）
+rabbit.eat.call(this);
+……所以 rabbit.eat 在不停地循环调用自己，因此它无法进一步地提升
+这个问题没法仅仅通过使用 this 来解决。
+============================================
+let animal = {
+  name: "Animal",
+  eat() {         // animal.eat.[[HomeObject]] == animal
+    alert(`${this.name} eats.`);
+  }
+};
+
+let rabbit = {
+  __proto__: animal,
+  name: "Rabbit",
+  eat() {         // rabbit.eat.[[HomeObject]] == rabbit
+    super.eat();
+  }
+};
+
+let longEar = {
+  __proto__: rabbit,
+  name: "Long Ear",
+  eat() {         // longEar.eat.[[HomeObject]] == longEar
+    super.eat();
+  }
+};
+
+// 正确执行
+longEar.eat();  // Long Ear eats.
+===========================================
+例如，我们有对象 Article，并且需要一个方法来比较它们。
+
+通常的解决方案就是添加 Article.compare 静态方法：
+
+class Article {
+  constructor(title, date) {
+    this.title = title;
+    this.date = date;
+  }
+
+  static compare(articleA, articleB) {
+    return articleA.date - articleB.date;
+  }
+}
+
+// 用法
+let articles = [
+  new Article("HTML", new Date(2019, 1, 1)),
+  new Article("CSS", new Date(2019, 0, 1)),
+  new Article("JavaScript", new Date(2019, 11, 1))
+];
+
+articles.sort(Article.compare);
+
+alert( articles[0].title ); // CSS
+这里 Article.compare 方法代表“上面的”文章，意思是比较它们。
+=================================
+内建类没有静态方法继承
+内建对象有它们自己的静态方法，例如 Object.keys，Array.isArray 等。
+
+如我们所知道的，原生的类互相扩展。例如，Array 扩展自 Object。
+
+通常，当一个类扩展另一个类时，静态方法和非静态方法都会被继承。这已经在 静态属性和静态方法 中详细地解释过了。
+
+但内建类却是一个例外。它们相互间不继承静态方法。
+
+例如，Array 和 Date 都继承自 Object，所以它们的实例都有来自 Object.prototype 的方法。但 Array.[[Prototype]] 并不指向 Object，所以它们没有例如 Array.keys()（或 Date.keys()）这些静态方法。
+
+Date 和 Object 之间没有连结。它们是独立的，只有 Date.prototype 继承自 Object.prototype，仅此而已。
+
+与我们所了解的通过 extends 获得的继承相比，这是内建对象之间继承的一个重要区别。
