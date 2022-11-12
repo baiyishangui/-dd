@@ -1,0 +1,627 @@
+让我们拿 Promise 链 那一章的 showAvatar() 例子，并将其改写成 async/await 的形式：
+
+我们需要用 await 替换掉 .then 的调用。
+另外，我们需要在函数前面加上 async 关键字，以使它们能工作。
+async function showAvatar() {
+
+  // 读取我们的 JSON
+  let response = await fetch('/article/promise-chaining/user.json');
+  let user = await response.json();
+
+  // 读取 github 用户信息
+  let githubResponse = await fetch(`https://api.github.com/users/${user.name}`);
+  let githubUser = await githubResponse.json();
+
+  // 显示头像
+  let img = document.createElement('img');
+  img.src = githubUser.avatar_url;
+  img.className = "promise-avatar-example";
+  document.body.append(img);
+
+  // 等待 3 秒
+  await new Promise((resolve, reject) => setTimeout(resolve, 3000));
+
+  img.remove();
+
+  return githubUser;
+}
+
+showAvatar();
+简洁明了，是吧？比之前可强多了。
+=========================================
+使用 generator 进行迭代
+在前面的 Iterable object（可迭代对象） 一章中，我们创建了一个可迭代的 range 对象，它返回 from..to 的值。
+
+现在，我们回忆一下代码：
+
+let range = {
+  from: 1,
+  to: 5,
+
+  // for..of range 在一开始就调用一次这个方法
+  [Symbol.iterator]() {
+    // ...它返回 iterator object：
+    // 后续的操作中，for..of 将只针对这个对象，并使用 next() 向它请求下一个值
+    return {
+      current: this.from,
+      last: this.to,
+
+      // for..of 循环在每次迭代时都会调用 next()
+      next() {
+        // 它应该以对象 {done:.., value :...} 的形式返回值
+        if (this.current <= this.last) {
+          return { done: false, value: this.current++ };
+        } else {
+          return { done: true };
+        }
+      }
+    };
+  }
+};
+
+// 迭代整个 range 对象，返回从 `range.from` 到 `range.to` 范围的所有数字
+alert([...range]); // 1,2,3,4,5
+我们可以通过提供一个 generator 函数作为 Symbol.iterator，来使用 generator 进行迭代：
+
+下面是一个相同的 range，但紧凑得多：
+
+let range = {
+  from: 1,
+  to: 5,
+
+  *[Symbol.iterator]() { // [Symbol.iterator]: function*() 的简写形式
+    for(let value = this.from; value <= this.to; value++) {
+      yield value;
+    }
+  }
+};
+
+alert( [...range] ); // 1,2,3,4,5
+之所以代码正常工作，是因为 range[Symbol.iterator]() 现在返回一个 generator，而 generator 方法正是 for..of 所期望的：
+
+它具有 .next() 方法
+它以 {value: ..., done: true/false} 的形式返回值
+当然，这不是巧合。generator 被添加到 JavaScript 语言中是有对 iterator 的考量的，以便更容易地实现 iterator。
+
+带有 generator 的变体比原来的 range 迭代代码简洁得多，并且保持了相同的功能。
+==========================================
+但是，我们如何才能动态地按需导入模块呢？
+
+import() 表达式
+import(module) 表达式加载模块并返回一个 promise，该 promise resolve 为一个包含其所有导出的模块对象。我们可以在代码中的任意位置调用这个表达式。
+
+我们可以在代码中的任意位置动态地使用它。例如：
+
+let modulePath = prompt("Which module to load?");
+
+import(modulePath)
+  .then(obj => <module object>)
+  .catch(err => <loading error, e.g. if no such module>)
+或者，如果在异步函数中，我们可以使用 let module = await import(modulePath)。
+
+例如，如果我们有以下模块 say.js：
+
+// 📁 say.js
+export function hi() {
+  alert(`Hello`);
+}
+
+export function bye() {
+  alert(`Bye`);
+}
+……那么，可以像下面这样进行动态导入：
+
+let {hi, bye} = await import('./say.js');
+
+hi();
+bye();
+或者，如果 say.js 有默认的导出：
+
+// 📁 say.js
+export default function() {
+  alert("Module loaded (export default)!");
+}
+……那么，为了访问它，我们可以使用模块对象的 default 属性：
+
+let obj = await import('./say.js');
+let say = obj.default;
+// or, in one line: let {default: say} = await import('./say.js');
+
+say();
+这是一个完整的示例：
+
+结果say.jsindex.html
+<!doctype html>
+<script>
+  async function load() {
+    let say = await import('./say.js');
+    say.hi(); // Hello!
+    say.bye(); // Bye!
+    say.default(); // Module loaded (export default)!
+  }
+</script>
+<button onclick="load()">Click me</button>
+请注意：
+动态导入在常规脚本中工作时，它们不需要 script type="module".
+===============================================
+让我们用 get 来实现一个对象的默认值。
+
+我们将创建一个对不存在的数组项返回 0 的数组。
+
+通常，当人们尝试获取不存在的数组项时，他们会得到 undefined，但是我们在这将常规数组包装到代理（proxy）中，以捕获读取操作，并在没有要读取的属性的时返回 0：
+
+let numbers = [0, 1, 2];
+
+numbers = new Proxy(numbers, {
+  get(target, prop) {
+    if (prop in target) {
+      return target[prop];
+    } else {
+      return 0; // 默认值
+    }
+  }
+});
+
+alert( numbers[1] ); // 1
+alert( numbers[123] ); // 0（没有这个数组项）
+正如我们所看到的，使用 get 捕捉器很容易实现。
+
+我们可以用 Proxy 来实现“默认”值的任何逻辑。
+===============================================
+使用 “ownKeys” 和 “getOwnPropertyDescriptor” 进行迭代
+Object.keys，for..in 循环和大多数其他遍历对象属性的方法都使用内部方法 [[OwnPropertyKeys]]（由 ownKeys 捕捉器拦截) 来获取属性列表。
+
+这些方法在细节上有所不同：
+
+Object.getOwnPropertyNames(obj) 返回非 symbol 键。
+Object.getOwnPropertySymbols(obj) 返回 symbol 键。
+Object.keys/values() 返回带有 enumerable 标志的非 symbol 键/值（属性标志在 属性标志和属性描述符 一章有详细讲解)。
+for..in 循环遍历所有带有 enumerable 标志的非 symbol 键，以及原型对象的键。
+……但是所有这些都从该列表开始。
+
+在下面这个示例中，我们使用 ownKeys 捕捉器拦截 for..in 对 user 的遍历，并使用 Object.keys 和 Object.values 来跳过以下划线 _ 开头的属性：
+
+let user = {
+  name: "John",
+  age: 30,
+  _password: "***"
+};
+
+user = new Proxy(user, {
+  ownKeys(target) {
+    return Object.keys(target).filter(key => !key.startsWith('_'));
+  }
+});
+
+// "ownKeys" 过滤掉了 _password
+for(let key in user) alert(key); // name，然后是 age
+
+// 对这些方法的效果相同：
+alert( Object.keys(user) ); // name,age
+alert( Object.values(user) ); // John,30
+到目前为止，它仍然有效。
+
+尽管如此，但如果我们返回对象中不存在的键，Object.keys 并不会列出这些键：
+
+let user = { };
+
+user = new Proxy(user, {
+  ownKeys(target) {
+    return ['a', 'b', 'c'];
+  }
+});
+
+alert( Object.keys(user) ); // <empty>
+为什么？原因很简单：Object.keys 仅返回带有 enumerable 标志的属性。为了检查它，该方法会对每个属性调用内部方法 [[GetOwnProperty]] 来获取 它的描述符（descriptor）。在这里，由于没有属性，其描述符为空，没有 enumerable 标志，因此它被略过。
+
+为了让 Object.keys 返回一个属性，我们需要它要么存在于带有 enumerable 标志的对象，要么我们可以拦截对 [[GetOwnProperty]] 的调用（捕捉器 getOwnPropertyDescriptor 可以做到这一点)，并返回带有 enumerable: true 的描述符。
+
+这是关于此的一个例子：
+
+let user = { };
+
+user = new Proxy(user, {
+  ownKeys(target) { // 一旦要获取属性列表就会被调用
+    return ['a', 'b', 'c'];
+  },
+
+  getOwnPropertyDescriptor(target, prop) { // 被每个属性调用
+    return {
+      enumerable: true,
+      configurable: true
+      /* ...其他标志，可能是 "value:..." */
+    };
+  }
+
+});
+
+alert( Object.keys(user) ); // a, b, c
+让我们再次注意：如果该属性在对象中不存在，那么我们只需要拦截 [[GetOwnProperty]]。
+==============================================
+带有 “has” 捕捉器的 “in range”
+让我们来看更多示例。
+
+我们有一个 range 对象：
+
+let range = {
+  start: 1,
+  end: 10
+};
+我们想使用 in 操作符来检查一个数字是否在 range 范围内。
+
+has 捕捉器会拦截 in 调用。
+
+has(target, property)
+
+target —— 是目标对象，被作为第一个参数传递给 new Proxy，
+property —— 属性名称。
+示例如下
+
+let range = {
+  start: 1,
+  end: 10
+};
+
+range = new Proxy(range, {
+  has(target, prop) {
+    return prop >= target.start && prop <= target.end;
+  }
+});
+
+alert(5 in range); // true
+alert(50 in range); // false
+漂亮的语法糖，不是吗？而且实现起来非常简单。
+============================
+Reference Type
+深入的语言特性
+本文所讲的是一个高阶主题，能帮你更好地理解一些边缘情况。
+
+这仅是锦上添花。许多经验丰富的的开发者不甚了了也过得不错。如果你想了解代码运行的本质，那就继续读下去吧。
+
+一个动态执行的方法调用可能会丢失 this。
+
+例如：
+
+let user = {
+  name: "John",
+  hi() { alert(this.name); },
+  bye() { alert("Bye"); }
+};
+
+user.hi(); // 正常运行
+
+// 现在让我们基于 name 来选择调用 user.hi 或 user.bye
+(user.name == "John" ? user.hi : user.bye)(); // Error!
+在最后一行有个在 user.hi 和 user.bye 中做选择的条件（三元）运算符。当前情形下的结果是 user.hi。
+
+接着该方法被通过 () 立刻调用。但是并不能正常工作！
+
+如你所见，此处调用导致了一个错误，因为在该调用中 "this" 的值变成了 undefined。
+
+这样是能工作的（对象.方法）：
+
+user.hi();
+这就无法工作了（被评估的方法）：
+
+(user.name == "John" ? user.hi : user.bye)(); // Error!
+为什么呢？欲知缘何，且让我们深入 obj.method() 调用运行的本质。
+
+Reference type 解读
+仔细看的话，我们可能注意到 obj.method() 语句中的两个操作：
+
+首先，点 '.' 取了属性 obj.method 的值。
+接着 () 执行了它。
+那么，this 的信息是怎么从第一部分传递到第二部分的呢？
+
+如果我们将这些操作放在不同的行，this 必定是会丢失的：
+
+let user = {
+  name: "John",
+  hi() { alert(this.name); }
+};
+
+// 把获取方法和调用方法拆成两行
+let hi = user.hi;
+hi(); // 报错了，因为 this 的值是 undefined
+这里 hi = user.hi 把函数赋值给了一个变量，接下来在最后一行它是完全独立的，所以这里没有 this。
+
+为确保 user.hi() 调用正常运行，JavaScript 玩了个小把戏 —— 点 '.' 返回的不是一个函数，而是一个特殊的 Reference Type 的值。
+
+Reference Type 是 ECMA 中的一个“规范类型”。我们不能直接使用它，但它被用在 JavaScript 语言内部。
+
+Reference Type 的值是一个三个值的组合 (base, name, strict)，其中：
+
+base 是对象。
+name 是属性名。
+strict 在 use strict 模式下为 true。
+对属性 user.hi 访问的结果不是一个函数，而是一个 Reference Type 的值。对于 user.hi，在严格模式下是：
+
+// Reference Type 的值
+(user, "hi", true)
+当 () 被在 Reference Type 上调用时，它们会接收到关于对象和对象的方法的完整信息，然后可以设置正确的 this（在此处 =user）。
+
+Reference Type 是一个特殊的“中间人”内部类型，目的是从 . 传递信息给 () 调用。
+
+任何例如赋值 hi = user.hi 等其他的操作，都会将 Reference Type 作为一个整体丢弃掉，而会取 user.hi（一个函数）的值并继续传递。所以任何后续操作都“丢失”了 this。
+
+因此，this 的值仅在函数直接被通过点符号 obj.method() 或方括号 obj['method']() 语法（此处它们作用相同）调用时才被正确传递。还有很多种解决这个问题的方式，例如 func.bind()。
+
+总结
+Reference Type 是语言内部的一个类型。
+
+读取一个属性，例如在 obj.method() 中，. 返回的准确来说不是属性的值，而是一个特殊的 “Reference Type” 值，其中储存着属性的值和它的来源对象。
+
+这是为了随后的方法调用 () 获取来源对象，然后将 this 设为它。
+
+对于所有其它操作，Reference Type 会自动变成属性的值（在我们这个情况下是一个函数）。
+
+这整个机制对我们是不可见的。它仅在一些微妙的情况下才重要，例如使用表达式从对象动态地获取一个方法时
+=========================================
+文档对象模型（DOM）
+文档对象模型（Document Object Model），简称 DOM，将所有页面内容表示为可以修改的对象。
+
+document 对象是页面的主要“入口点”。我们可以使用它来更改或创建页面上的任何内容。
+
+例如：
+
+// 将背景颜色修改为红色
+document.body.style.background = "red";
+
+// 在 1 秒后将其修改回来
+setTimeout(() => document.body.style.background = "", 1000);
+在这里，我们使用了 document.body.style，但还有很多很多其他的东西。规范中有属性和方法的详细描述：DOM Living Standard。
+
+DOM 不仅仅用于浏览器
+DOM 规范解释了文档的结构，并提供了操作文档的对象。有的非浏览器设备也使用 DOM。
+
+例如，下载 HTML 文件并对其进行处理的服务器端脚本也可以使用 DOM。但它们可能仅支持部分规范中的内容。
+
+用于样式的 CSSOM
+另外也有一份针对 CSS 规则和样式表的、单独的规范 CSS Object Model (CSSOM)，这份规范解释了如何将 CSS 表示为对象，以及如何读写这些对象。
+
+当我们修改文档的样式规则时，CSSOM 与 DOM 是一起使用的。但实际上，很少需要 CSSOM，因为我们很少需要从 JavaScript 中修改 CSS 规则（我们通常只是添加/移除一些 CSS 类，而不是直接修改其中的 CSS 规则），但这也是可行的。
+
+浏览器对象模型（BOM）
+浏览器对象模型（Browser Object Model），简称 BOM，表示由浏览器（主机环境）提供的用于处理文档（document）之外的所有内容的其他对象。
+
+例如：
+
+navigator 对象提供了有关浏览器和操作系统的背景信息。navigator 有许多属性，但是最广为人知的两个属性是：navigator.userAgent —— 关于当前浏览器，navigator.platform —— 关于平台（有助于区分 Windows/Linux/Mac 等）。
+location 对象允许我们读取当前 URL，并且可以将浏览器重定向到新的 URL。
+这是我们可以如何使用 location 对象的方法：
+
+alert(location.href); // 显示当前 URL
+if (confirm("Go to Wikipedia?")) {
+  location.href = "https://wikipedia.org"; // 将浏览器重定向到另一个 URL
+}
+函数 alert/confirm/prompt 也是 BOM 的一部分：它们与文档（document）没有直接关系，但它代表了与用户通信的纯浏览器方法。
+===================================================
+innerHTML：内容
+innerHTML 属性允许将元素中的 HTML 获取为字符串形式。
+
+我们也可以修改它。因此，它是更改页面最有效的方法之一。
+
+下面这个示例显示了 document.body 中的内容，然后将其完全替换：
+
+<body>
+  <p>A paragraph</p>
+  <div>A div</div>
+
+  <script>
+    alert( document.body.innerHTML ); // 读取当前内容
+    document.body.innerHTML = 'The new BODY!'; // 替换它
+  </script>
+
+</body>
+
+我们可以尝试插入无效的 HTML，浏览器会修复我们的错误：
+
+<body>
+
+  <script>
+    document.body.innerHTML = '<b>test'; // 忘记闭合标签
+    alert( document.body.innerHTML ); // <b>test</b>（被修复了）
+  </script>
+
+</body>
+脚本不会执行
+如果 innerHTML 将一个 <script> 标签插入到 document 中 —— 它会成为 HTML 的一部分，但是不会执行。
+
+小心：“innerHTML+=” 会进行完全重写
+我们可以使用 elem.innerHTML+="more html" 将 HTML 附加到元素上。
+
+就像这样：
+
+chatDiv.innerHTML += "<div>Hello<img src='smile.gif'/> !</div>";
+chatDiv.innerHTML += "How goes?";
+但我们必须非常谨慎地使用它，因为我们所做的 不是 附加内容，而且完全地重写。
+
+从技术上来说，下面这两行代码的作用相同：
+
+elem.innerHTML += "...";
+// 进行写入的一种更简短的方式：
+elem.innerHTML = elem.innerHTML + "..."
+换句话说，innerHTML+= 做了以下工作：
+
+移除旧的内容。
+然后写入新的 innerHTML（新旧结合）。
+因为内容已“归零”并从头开始重写，因此所有的图片和其他资源都将重写加载。
+
+在上面的 chatDiv 示例中，chatDiv.innerHTML+="How goes?" 重建了 HTML 内容并重新加载了 smile.gif（希望它是缓存的）。如果 chatDiv 有许多其他文本和图片，那么就很容易看到重新加载（译注：是指在有很多内容时，重新加载会耗费更多的时间，所以你就很容易看见页面重载的过程）。
+
+并且还会有其他副作用。例如，如果现有的文本被用鼠标选中了，那么大多数浏览器都会在重写 innerHTML 时删除选定状态。如果这里有一个带有用户输入的文本的 <input>，那么这个被输入的文本将会被移除。诸如此类。
+
+幸运的是，除了 innerHTML，还有其他可以添加 HTML 的方法，我们很快就会学到。
+
+outerHTML：元素的完整 HTML
+outerHTML 属性包含了元素的完整 HTML。就像 innerHTML 加上元素本身一样。
+
+下面是一个示例：
+
+<div id="elem">Hello <b>World</b></div>
+
+<script>
+  alert(elem.outerHTML); // <div id="elem">Hello <b>World</b></div>
+</script>
+注意：与 innerHTML 不同，写入 outerHTML 不会改变元素。而是在 DOM 中替换它。
+
+是的，听起来很奇怪，它确实很奇怪，这就是为什么我们在这里对此做了一个单独的注释。看一下。
+
+考虑下面这个示例：
+
+<div>Hello, world!</div>
+
+<script>
+  let div = document.querySelector('div');
+
+  // 使用 <p>...</p> 替换 div.outerHTML
+  div.outerHTML = '<p>A new element</p>'; // (*)
+
+  // 蛤！'div' 还是原来那样！
+  alert(div.outerHTML); // <div>Hello, world!</div> (**)
+</script>
+看起来真的很奇怪，对吧？
+
+在 (*) 行，我们使用 <p>A new element</p> 替换 div。在外部文档（DOM）中我们可以看到的是新内容而不是 <div>。但是正如我们在 (**) 行所看到的，旧的 div 变量并没有被改变。
+
+outerHTML 赋值不会修改 DOM 元素（在这个例子中是被 ‘div’ 引用的对象），而是将其从 DOM 中删除并在其位置插入新的 HTML。
+
+所以，在 div.outerHTML=... 中发生的事情是：
+
+div 被从文档（document）中移除。
+另一个 HTML 片段 <p>A new element</p> 被插入到其位置上。
+div 仍拥有其旧的值。新的 HTML 没有被赋值给任何变量。
+在这儿很容易出错：修改 div.outerHTML 然后继续使用 div，就好像它包含的是新内容一样。但事实并非如此。这样的东西对于 innerHTML 是正确的，但是对于 outerHTML 却不正确。
+
+我们可以向 elem.outerHTML 写入内容，但是要记住，它不会改变我们所写的元素（‘elem’）。而是将新的 HTML 放在其位置上。我们可以通过查询 DOM 来获取对新元素的引用。
+===================================
+总结
+每个 DOM 节点都属于一个特定的类。这些类形成层次结构（hierarchy）。完整的属性和方法集是继承的结果。
+
+主要的 DOM 节点属性有：
+
+nodeType
+我们可以使用它来查看节点是文本节点还是元素节点。它具有一个数值型值（numeric value）：1 表示元素，3 表示文本节点，其他一些则代表其他节点类型。只读。
+nodeName/tagName
+用于元素名，标签名（除了 XML 模式，都要大写）。对于非元素节点，nodeName 描述了它是什么。只读。
+innerHTML
+元素的 HTML 内容。可以被修改。
+outerHTML
+元素的完整 HTML。对 elem.outerHTML 的写入操作不会触及 elem 本身。而是在外部上下文中将其替换为新的 HTML。
+nodeValue/data
+非元素节点（文本、注释）的内容。两者几乎一样，我们通常使用 data。可以被修改。
+textContent
+元素内的文本：HTML 减去所有 <tags>。写入文本会将文本放入元素内，所有特殊字符和标签均被视为文本。可以安全地插入用户生成的文本，并防止不必要的 HTML 插入。
+hidden
+当被设置为 true 时，执行与 CSS display:none 相同的事。
+DOM 节点还具有其他属性，具体有哪些属性则取决于它们的类。例如，<input> 元素（HTMLInputElement）支持 value，type，而 <a> 元素（HTMLAnchorElement）则支持 href 等。大多数标准 HTML 特性（attribute）都具有相应的 DOM 属性。
+
+然而，但是 HTML 特性（attribute）和 DOM 属性（property）并不总是相同的，我们将在下一章中看到。
+=========================================
+非标准的特性，dataset
+当编写 HTML 时，我们会用到很多标准的特性。但是非标准的，自定义的呢？首先，让我们看看它们是否有用？用来做什么？
+
+有时，非标准的特性常常用于将自定义的数据从 HTML 传递到 JavaScript，或者用于为 JavaScript “标记” HTML 元素。
+
+像这样：
+
+<!-- 标记这个 div 以在这显示 "name" -->
+<div show-info="name"></div>
+<!-- 标记这个 div 以在这显示 "age" -->
+<div show-info="age"></div>
+
+<script>
+  // 这段代码找到带有标记的元素，并显示需要的内容
+  let user = {
+    name: "Pete",
+    age: 25
+  };
+
+  for(let div of document.querySelectorAll('[show-info]')) {
+    // 在字段中插入相应的信息
+    let field = div.getAttribute('show-info');
+    div.innerHTML = user[field]; // 首先 "name" 变为 Pete，然后 "age" 变为 25
+  }
+</script>
+它们还可以用来设置元素的样式。
+
+例如，这里使用 order-state 特性来设置订单状态：
+
+<style>
+  /* 样式依赖于自定义特性 "order-state" */
+  .order[order-state="new"] {
+    color: green;
+  }
+
+  .order[order-state="pending"] {
+    color: blue;
+  }
+
+  .order[order-state="canceled"] {
+    color: red;
+  }
+</style>
+
+<div class="order" order-state="new">
+  A new order.
+</div>
+
+<div class="order" order-state="pending">
+  A pending order.
+</div>
+
+<div class="order" order-state="canceled">
+  A canceled order.
+</div>
+为什么使用特性比使用 .order-state-new，.order-state-pending，.order-state-canceled 这些样式类要好？
+
+因为特性值更容易管理。我们可以轻松地更改状态：
+
+// 比删除旧的或者添加一个新的类要简单一些
+div.setAttribute('order-state', 'canceled');
+但是自定义的特性也存在问题。如果我们出于我们的目的使用了非标准的特性，之后它被引入到了标准中并有了其自己的用途，该怎么办？HTML 语言是在不断发展的，并且更多的特性出现在了标准中，以满足开发者的需求。在这种情况下，自定义的属性可能会产生意料不到的影响。
+
+为了避免冲突，存在 data-* 特性。
+
+所有以 “data-” 开头的特性均被保留供程序员使用。它们可在 dataset 属性中使用。
+
+例如，如果一个 elem 有一个名为 "data-about" 的特性，那么可以通过 elem.dataset.about 取到它。
+
+像这样：
+
+<body data-about="Elephants">
+<script>
+  alert(document.body.dataset.about); // Elephants
+</script>
+像 data-order-state 这样的多词特性可以以驼峰式进行调用：dataset.orderState。
+
+这里是 “order state” 那个示例的重构版：
+
+<style>
+  .order[data-order-state="new"] {
+    color: green;
+  }
+
+  .order[data-order-state="pending"] {
+    color: blue;
+  }
+
+  .order[data-order-state="canceled"] {
+    color: red;
+  }
+</style>
+
+<div id="order" class="order" data-order-state="new">
+  A new order.
+</div>
+
+<script>
+  // 读取
+  alert(order.dataset.orderState); // new
+
+  // 修改
+  order.dataset.orderState = "pending"; // (*)
+</script>
+使用 data-* 特性是一种合法且安全的传递自定义数据的方式。
+
+请注意，我们不仅可以读取数据，还可以修改数据属性（data-attributes）。然后 CSS 会更新相应的视图：在上面这个例子中的最后一行 (*) 将颜色更改为了蓝色。
