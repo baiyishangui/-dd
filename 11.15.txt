@@ -1,0 +1,324 @@
+选择范围的方法
+有许多便利的方法可以操纵范围。
+
+我们已经见过了 setStart 和 setEnd，这还有其他类似的方法。
+
+设置范围的起点：
+
+setStart(node, offset) 将起点设置在：node 中的位置 offset
+setStartBefore(node) 将起点设置在：node 前面
+setStartAfter(node) 将起点设置在：node 后面
+设置范围的终点（类似的方法）：
+
+setEnd(node, offset) 将终点设置为：node 中的位置 offset
+setEndBefore(node) 将终点设置为：node 前面
+setEndAfter(node) 将终点设置为：node 后面
+从技术上讲，setStart/setEnd 可以做任何事，但是更多的方法提供了更多的便捷性。
+
+在所有这些方法中，node 都可以是文本或者元素节点：对于文本节点，偏移量 offset 跨越的是很多字母，而对于元素节点则跨越的是很多子节点。
+
+更多创建范围的方法：
+
+selectNode(node) 设置范围以选择整个 node
+selectNodeContents(node) 设置范围以选择整个 node 的内容
+collapse(toStart) 如果 toStart=true 则设置 end=start，否则设置 start=end，从而折叠范围
+cloneRange() 创建一个具有相同起点/终点的新范围
+编辑范围的方法
+创建范围后，我们可以使用以下方法操作其内容：
+
+deleteContents() —— 从文档中删除范围中的内容
+extractContents() —— 从文档中删除范围中的内容，并将删除的内容作为 DocumentFragment 返回
+cloneContents() —— 复制范围中的内容，并将复制的内容作为 DocumentFragment 返回
+insertNode(node) —— 在范围的起始处将 node 插入文档
+surroundContents(node) —— 使用 node 将所选范围中的内容包裹起来。要使此操作有效，则该范围必须包含其中所有元素的开始和结束标签：不能像 <i>abc 这样的部分范围。
+================================================================
+选择复制演示
+复制所选内容有两种方式：
+
+我们可以使用 document.getSelection().toString() 来获取其文本形式。
+此外，想要复制整个 DOM 节点，例如，如果我们需要保持其格式不变，我们可以使用 getRangeAt(...) 获取底层的（underlying）范围。Range 对象还具有 cloneContents() 方法，该方法会拷贝范围中的内容并以 DocumentFragment 的形式返回，我们可以将这个返回值插入到其他位置。
+下面是将所选内容复制为文本和 DOM 节点的演示：
+
+<p id="p">Select me: <i>italic</i> and <b>bold</b></p>
+
+Cloned: <span id="cloned"></span>
+<br>
+As text: <span id="astext"></span>
+
+<script>
+  document.onselectionchange = function() {
+    let selection = document.getSelection();
+
+    cloned.innerHTML = astext.innerHTML = "";
+
+    // 从范围复制 DOM 节点（这里我们支持多选）
+    for (let i = 0; i < selection.rangeCount; i++) {
+      cloned.append(selection.getRangeAt(i).cloneContents());
+    }
+
+    // 获取为文本形式
+    astext.innerHTML += selection;
+  };
+</script>
+选择方法
+我们可以通过添加/移除范围来处理选择：
+
+getRangeAt(i) —— 获取从 0 开始的第 i 个范围。在除 Firefox 之外的所有浏览器中，仅使用 0。
+addRange(range) —— 将 range 添加到选择中。如果选择已有关联的范围，则除 Firefox 外的所有浏览器都将忽略该调用。
+removeRange(range) —— 从选择中删除 range。
+removeAllRanges() —— 删除所有范围。
+empty() —— removeAllRanges 的别名。
+还有一些方便的方法可以直接操作选择范围，而无需中间的 Range 调用：
+
+collapse(node, offset) —— 用一个新的范围替换选定的范围，该新范围从给定的 node 处开始，到偏移 offset 处结束。
+setPosition(node, offset) —— collapse 的别名。
+collapseToStart() —— 折叠（替换为空范围）到选择起点，
+collapseToEnd() —— 折叠到选择终点，
+extend(node, offset) —— 将选择的焦点（focus）移到给定的 node，位置偏移 oofset，
+setBaseAndExtent(anchorNode, anchorOffset, focusNode, focusOffset) —— 用给定的起点 anchorNode/anchorOffset 和终点 focusNode/focusOffset 来替换选择范围。选中它们之间的所有内容。
+selectAllChildren(node) —— 选择 node 的所有子节点。
+deleteFromDocument() —— 从文档中删除所选择的内容。
+containsNode(node, allowPartialContainment = false) —— 检查选择中是否包含 node（若第二个参数是 true，则只需包含 node 的部分内容即可）
+对于大多数需求，这些方法就够了，无需访问底层的（underlying）Range 对象。
+
+例如，选择段落 <p> 的全部内容：
+
+<p id="p">Select me: <i>italic</i> and <b>bold</b></p>
+
+<script>
+  // 从 <p> 的第 0 个子节点选择到最后一个子节点
+  document.getSelection().setBaseAndExtent(p, 0, p, p.childNodes.length);
+</script>
+使用范围来完成同一个操作：
+
+<p id="p">Select me: <i>italic</i> and <b>bold</b></p>
+
+<script>
+  let range = new Range();
+  range.selectNodeContents(p); // 或者也可以使用 selectNode(p) 来选择 <p> 标签
+
+  document.getSelection().removeAllRanges(); // 清除现有选择（如果有的话）
+  document.getSelection().addRange(range);
+</script>
+如要选择一些内容，请先移除现有的选择
+如果在文档中已存在选择，则首先使用 removeAllRanges() 将其清空。然后添加范围。否则，除 Firefox 外的所有浏览器都将忽略新范围。
+
+某些选择方法例外，它们会替换现有的选择，例如 setBaseAndExtent。
+===================================================
+我们介绍了用于选择的两种不同的 API：
+
+对于文档：Selection 和 Range 对象。
+对于 input，textarea：其他方法和属性。
+第二个 API 非常简单，因为它处理的是文本。
+
+最常用的方案一般是：
+
+获取选择：
+let selection = document.getSelection();
+
+let cloned = /* 要将所选的节点克隆到的元素 */;
+
+// 然后将 Range 方法应用于 selection.getRangeAt(0)
+// 或者，像这样，用于所有范围，以支持多选
+for (let i = 0; i < selection.rangeCount; i++) {
+  cloned.append(selection.getRangeAt(i).cloneContents());
+}
+设置选择
+let selection = document.getSelection();
+
+// 直接：
+selection.setBaseAndExtent(...from...to...);
+
+// 或者我们可以创建一个范围并：
+selection.removeAllRanges();
+selection.addRange(range);
+最后，关于光标。在诸如 <textarea> 之类的可编辑元素中，光标的位置始终位于选择的起点或终点。我们可以通过设置 elem.selectionStart 和 elem.selectionEnd 来获取光标位置或移动光标。
+===============================================
+总结
+更详细的事件循环算法（尽管与 规范 相比仍然是简化过的）：
+
+从 宏任务 队列（例如 “script”）中出队（dequeue）并执行最早的任务。
+执行所有 微任务：
+当微任务队列非空时：
+出队（dequeue）并执行最早的微任务。
+如果有变更，则将变更渲染出来。
+如果宏任务队列为空，则休眠直到出现宏任务。
+转到步骤 1。
+安排（schedule）一个新的 宏任务：
+
+使用零延迟的 setTimeout(f)。
+它可被用于将繁重的计算任务拆分成多个部分，以使浏览器能够对用户事件作出反应，并在任务的各部分之间显示任务进度。
+
+此外，也被用于在事件处理程序中，将一个行为（action）安排（schedule）在事件被完全处理（冒泡完成）后。
+
+安排一个新的 微任务：
+
+使用 queueMicrotask(f)。
+promise 处理程序也会通过微任务队列。
+在微任务之间没有 UI 或网络事件的处理：它们一个立即接一个地执行。
+
+所以，我们可以使用 queueMicrotask 来在保持环境状态一致的情况下，异步地执行一个函数。
+==============================================
+移动和调整大小
+有一些方法可以移动一个窗口，或者调整一个窗口的大小：
+
+win.moveBy(x,y)
+将窗口相对于当前位置向右移动 x 像素，并向下移动 y 像素。允许负值（向上/向左移动）。
+win.moveTo(x,y)
+将窗口移动到屏幕上的坐标 (x,y) 处。
+win.resizeBy(width,height)
+根据给定的相对于当前大小的 width/height 调整窗口大小。允许负值。
+win.resizeTo(width,height)
+将窗口调整为给定的大小。
+还有 window.onresize 事件。
+
+仅对于弹窗
+为了防止滥用，浏览器通常会阻止这些方法。它们仅在我们打开的，没有其他选项卡的弹窗中能够可靠地工作。
+
+没有最小化/最大化
+JavaScript 无法最小化或者最大化一个窗口。这些操作系统级别的功能对于前端开发者而言是隐藏的。
+
+移动或者调整大小的方法不适用于最小化/最大化的窗口。
+==========================================
+实例：iframe
+一个 <iframe> 标签承载了一个单独的嵌入的窗口，它具有自己的 document 和 window。
+
+我们可以使用以下属性访问它们：
+
+iframe.contentWindow 来获取 <iframe> 中的 window。
+iframe.contentDocument 来获取 <iframe> 中的 document，是 iframe.contentWindow.document 的简写形式。
+当我们访问嵌入的窗口中的东西时，浏览器会检查 iframe 是否具有相同的源。如果不是，则会拒绝访问（对 location 进行写入是一个例外，它是会被允许的）。
+
+例如，让我们尝试对来自另一个源的 <iframe> 进行读取和写入：
+
+<iframe src="https://example.com" id="iframe"></iframe>
+
+<script>
+  iframe.onload = function() {
+    // 我们可以获取对内部 window 的引用
+    let iframeWindow = iframe.contentWindow; // OK
+    try {
+      // ...但是无法获取其中的文档
+      let doc = iframe.contentDocument; // ERROR
+    } catch(e) {
+      alert(e); // Security Error（另一个源）
+    }
+
+    // 并且，我们也无法读取 iframe 中页面的 URL
+    try {
+      // 无法从 location 对象中读取 URL
+      let href = iframe.contentWindow.location.href; // ERROR
+    } catch(e) {
+      alert(e); // Security Error
+    }
+
+    // ...我们可以写入 location（所以，在 iframe 中加载了其他内容）！
+    iframe.contentWindow.location = '/'; // OK
+
+    iframe.onload = null; // 清空处理程序，在 location 更改后不要再运行它
+  };
+</script>
+上述代码除了以下操作都会报错：
+
+通过 iframe.contentWindow 获取对内部 window 的引用 —— 这是被允许的。
+对 location 进行写入
+与此相反，如果 <iframe> 具有相同的源，我们可以使用它做任何事情：
+
+<!-- 来自同一个网站的 iframe -->
+<iframe src="/" id="iframe"></iframe>
+
+<script>
+  iframe.onload = function() {
+    // 可以做任何事儿
+    iframe.contentDocument.body.prepend("Hello, world!");
+  };
+</script>
+iframe.onload vs iframe.contentWindow.onload
+iframe.onload 事件（在 <iframe> 标签上）与 iframe.contentWindow.onload（在嵌入的 window 对象上）基本相同。当嵌入的窗口的所有资源都完全加载完毕时触发。
+
+……但是，我们无法使用 iframe.contentWindow.onload 访问不同源的 iframe。因此，请使用 iframe.onload，
+=========================================================
+贝塞尔曲线（Bezier curve）
+时间函数可以用贝塞尔曲线描述，通过设置四个满足以下条件的控制点：
+
+第一个应为：(0,0)。
+最后一个应为：(1,1)。
+对于中间值，x 必须位于 0..1 之间，y 可以为任意值。
+CSS 中设置一贝塞尔曲线的语法为：cubic-bezier(x2, y2, x3, y3)。这里我们只需要设置第二个和第三个值，因为第一个点固定为 (0,0)，第四个点固定为 (1,1)。
+
+时间函数描述了动画进行的快慢。
+
+x 轴表示时间：0 —— 开始时刻，1 —— transition-duration的结束时刻。
+y 轴表示过程的完成度：0 —— 属性的起始值，1 —— 属性的最终值。
+最简单的一种情况就是动画匀速进行，可以通过设置曲线为 cubic-bezier(0, 0, 1, 1) 来实现。
+
+看上去就像这样：
+
+
+…正如我们所见，这就是条直线。随着时间 x 推移，完成度 y 稳步从 0 增长到 1。
+
+例子中的列车匀速地从左侧移动到右侧：
+
+结果style.cssindex.html
+
+这个里面的 CSS 就是基于刚才那条曲线的：
+
+.train {
+  left: 0;
+  transition: left 5s cubic-bezier(0, 0, 1, 1);
+  /* JavaScript sets left to 450px */
+}
+…那么，我们如果表现出减速行驶的列车呢？
+
+我们可以使用另一条贝塞尔曲线：cubic-bezier(0.0, 0.5, 0.5 ,1.0)。
+==========================================
+expires，max-age
+默认情况下，如果一个 cookie 没有设置这两个参数中的任何一个，那么在关闭浏览器之后，它就会消失。此类 cookie 被称为 "session cookie”。
+
+为了让 cookie 在浏览器关闭后仍然存在，我们可以设置 expires 或 max-age 选项中的一个。
+
+expires=Tue, 19 Jan 2038 03:14:07 GMT
+cookie 的过期时间定义了浏览器会自动清除该 cookie 的时间。
+
+日期必须完全采用 GMT 时区的这种格式。我们可以使用 date.toUTCString 来获取它。例如，我们可以将 cookie 设置为 1 天后过期。
+
+// 当前时间 +1 天
+let date = new Date(Date.now() + 86400e3);
+date = date.toUTCString();
+document.cookie = "user=John; expires=" + date;
+如果我们将 expires 设置为过去的时间，则 cookie 会被删除。
+
+max-age=3600
+它是 expires 的替代选项，指明了 cookie 的过期时间距离当前时间的秒数。
+
+如果将其设置为 0 或负数，则 cookie 会被删除：
+
+// cookie 会在一小时后失效
+document.cookie = "user=John; max-age=3600";
+
+// 删除 cookie（让它立即过期）
+document.cookie = "user=John; max-age=0";
+secure
+secure
+Cookie 应只能被通过 HTTPS 传输。
+
+默认情况下，如果我们在 http://site.com 上设置了 cookie，那么该 cookie 也会出现在 https://site.com 上，反之亦然。
+
+也就是说，cookie 是基于域的，它们不区分协议。
+
+使用此选项，如果一个 cookie 是通过 https://site.com 设置的，那么它不会在相同域的 HTTP 环境下出现，例如 http://site.com。所以，如果一个 cookie 包含绝不应该通过未加密的 HTTP 协议发送的敏感内容，那么就应该设置 secure 标识。
+
+// 假设我们现在在 HTTPS 环境下
+// 设置 cookie secure（只在 HTTPS 环境下可访问）
+document.cookie = "user=John; secure";
+
+
+
+
+
+
+
+
+
+等下回来先把js的笔记看一遍。。然后我想想，要看一下jq，jq看完把ajax，node和bootstrap看一下，争取三天能把这些看完
+，然后看框架，框架不会是肯定没办法找实习的。。。。真是头大啊真的。
