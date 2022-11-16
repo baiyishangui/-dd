@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #result {
+            width: 200px;
+            height: 100px;
+            border: solid 1px #258;
+        }
+    </style>
+</head>
+
+<body>
+    <button>点击发送请求</button>
+    <div id="result"></div>
+    <script>
+        const btn = document.getElementsByTagName('button')[0];
+        const result = document.querySelector('#result');
+
+        btn.addEventListener('click', function () {
+            //   发送请求
+            const xhr = new XMLHttpRequest();
+
+            //   这里相当于是让ie认为是不同的url请求，其实缓存还在只是引用了另一个
+            xhr.open('GET', 'http://127.0.0.1:8000/ie?t=' + Date.now());
+
+
+            // 发送
+            xhr.send();
+            // 事件绑定
+            xhr.onreadystatechange = function () {
+
+                if (xhr.readyState === 4) {
+
+                    if (xhr.status >= 200 && xhr.status < 300) {
+
+
+                        console.log(xhr.response);
+                        result.innerHTML = xhr.response;
+
+
+                    }
+                }
+
+            }
+
+        })
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>axios发送ajax</title>
+    <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/axios@1.1.2/dist/axios.min.js"></script>
+    
+</head>
+<body>
+    <button>GET</button>
+    <button>POST</button>
+    <button>AJAX</button>
+    <script>
+        const btns = document.querySelectorAll('button');
+        btns[0].onclick = function(){
+            // get请求
+            axios.get('http://127.0.0.1:8000/axios-server',{
+                // url参数
+                params:{
+                    id:100,
+                    vip:7
+                },
+                // 请求头信息
+                headers:{
+                    name:'tjl',
+                    age:20
+                }
+            }).then(value =>{
+                console.log(value);
+            });//这里的返回数据是基于Promise的
+
+        }
+        btns[1].onclick= function(){
+
+            // post方法
+            axios.post('http://127.0.0.1:8000/axios-server',{
+                username:'tjl',
+                passwoed:'wzy'
+            } ,{
+                // url参数
+                params:{
+                    id:100,
+                    vip:7
+                },
+                // 请求头信息
+                headers:{
+                    name:'tjl',
+                    age:20
+                }
+            })
+        }
+        btns[2].onclick = function(){
+            axios({
+                // 请求方法
+                method:'POST',
+              //url
+              url:'http://127.0.0.1:8000/axios-server',
+            // url参数
+            params:{
+                    id:200,
+                    vip:9
+                },
+                // 请求头信息
+                headers:{
+                    name:'tjl',
+                    age:20
+                },
+                // 请求体参数
+                data:{
+                    username:'tjl',
+                    password:'wzy'
+                }
+
+
+
+            })
+        }
+    </script>
+    
+</body>
+</html>

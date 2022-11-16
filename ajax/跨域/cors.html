@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跨域资源共享</title>
+    <style>
+        #result {
+            width: 300px;
+            height: 100px;
+            border: solid 1px #089;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- cors,跨域资源共享。诗官方的跨域解决方案，特点是不需要在客户端进行任何特殊的操作，完全在服务器中进行处理，支持get，post请求
+    ，标准新增了一组http首部字段，允许服务器声明哪些源站通过浏览器有权访问哪些资源，主要就是设置响应头，cors主要使用是在服务器的配置 -->
+    <button>发送请求</button>
+    <div id="result"></div>
+    <script>
+        const btn = document.querySelector('button');
+        btn.onclick = function () {
+            // ajax四步走
+            const x = new XMLHttpRequest();
+            x.open("GET", "http://127.0.0.1:8000/cors-server");
+            x.send();
+            xhr.onreadystatechange = function () {
+
+                if (xhr.readyState === 4) {
+
+                    if (xhr.status >= 200 && xhr.status < 300) {
+
+
+                        console.log(x.response);
+                        
+
+
+                    }
+                }
+
+            }
+
+
+        }
+
+
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>同源策略</title>
+
+</head>
+
+<body>
+    <h1>gagaga</h1>
+    <button>点击获取用户数据</button>
+    <script>
+        const btn = document.querySelector('button');
+
+        btn.onclick = function () {
+            const x = new XMLHttpRequest();
+            // 这里因为是同源，所以url是可以简写的
+            x.open("GET", '/data');
+            x.send();
+            x.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+
+                    if (xhr.status >= 200 && xhr.status < 300) {
+
+
+                        console.log(xhr.response);
+                    }
+
+                }
+            }
+        }
+    </script>
+
+</body>
+
+</html>

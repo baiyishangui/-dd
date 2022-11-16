@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <!-- 原案例是用bootstrap搭建的框架并引用jQuery库，鉴于我们这里还没有
+    将知识拓展到框架，这里只将大致方法复现，后期学了jq自然明白 -->
+    <script>
+        // 这里注意分析一下函数的结构和各个参数
+        $('button').eq(0).click(function () {
+            $.get('http://127.0.0.1:8000/jquery-server', { a: 100, b: 200 }, function () {
+                console.log(data);
+            }, 'json');
+        })
+        $('button').eq(1).click(function () {
+            $.post('http://127.0.0.1:8000/jquery-server', { a: 100, b: 200 }, function () {
+                console.log(data);
+            });
+        })
+        $('button').eq(2).click(function(){
+            // 调用$对象的ajax方法(通用)
+            $.ajax({
+                // url
+                url:'http://127.0.0.1:8000/jquery-server',
+                data:{a:100,b:200},
+                // 请求类型
+                type:'GET' ,
+                // 响应体设置
+                dataType:'json',
+                // 成功的回调
+                success: function(data){
+                    console.log(data);
+                },
+                timeout: 2000,
+                error: function(){
+                    console.log('出错！');
+                }
+
+
+
+            })
+        })
+
+
+    </script>
+</body>
+
+</html>
